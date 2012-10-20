@@ -2,13 +2,14 @@
 from player import MusicPlayer
 from explorator import LfileExplorer
 from library import QueueUI
+from timer import TimeKeeper, TimePicker
 
 MyFilePattern = r"\A(.|^\w)*\.(((m|M)(p|P)3)|((o|O)(g|G)(g|G)))\Z" #".*\.(((m|M)(p|P)3)|((m|M)(p|P)2)|((w|W)(m|M)(a|A))|((a|A)(c|C)3)|((o|O)(g|G)(g|G))|((a|A)(c|C)(c|C)))" #".*\.((mp3|mp2|wma|ac3|ogg|acc)"
 
 class myframe(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, None, wx.ID_ANY, title=u'Odtwarzacz', size = (800,650))
+        wx.Frame.__init__(self, None, wx.ID_ANY, title=u'Odtwarzacz', size = (800,850))
         self.CreateStatusBar()
         filemenu = wx.Menu()
         menuAbout = filemenu.Append(wx.ID_ABOUT, u"O programie",u" Informacje o tym programie")
@@ -39,6 +40,15 @@ class myframe(wx.Frame):
         c.Bind(wx.EVT_LEFT_UP, self.OA)
 
         self.mp = MusicPlayer(self, self.OnAskNext, (0,450), (700,100))
+
+        tp = TimePicker(self, wx.DefaultPosition)
+        tp.ShowModal()
+        self.lag = tp.GetLag()
+        tp.Destroy()
+        print "Lag set to", self.lag
+
+        self.tk = TimeKeeper("przerwy.txt", self.lag, None, None)
+        
         self.SetAutoLayout(True)
 
     def OR(self, e):

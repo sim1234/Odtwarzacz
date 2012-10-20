@@ -25,13 +25,14 @@ class Timer(threading.Thread):
                     try:
                         self.function()
                     except Exception as e:
-                        #print "Timer function error:", e
-                        self.running = False
-                        break
+                        print "Timer function error:", e
+                        #self.running = False
+                        #break
+                        return
                     time.sleep(self.lag)
 
             def stop(self):
-                self.runing = False
+                self.running = False
                 self.join(0)
 
 class Delete(threading.Thread):
