@@ -1,8 +1,7 @@
 ﻿import wx, os, pygame
-from fn import MusicPlayer
+from player import MusicPlayer
 from explorator import LfileExplorer
 from library import QueueUI
-from wx.media import MediaCtrl
 
 MyFilePattern = r"\A(.|^\w)*\.(((m|M)(p|P)3)|((o|O)(g|G)(g|G)))\Z" #".*\.(((m|M)(p|P)3)|((m|M)(p|P)2)|((w|W)(m|M)(a|A))|((a|A)(c|C)3)|((o|O)(g|G)(g|G))|((a|A)(c|C)(c|C)))" #".*\.((mp3|mp2|wma|ac3|ogg|acc)"
 
