@@ -19,6 +19,7 @@ class myframe(wx.Frame):
         self.SetMenuBar(menuBar)
         self.Bind(wx.EVT_MENU, self.onAbout, menuAbout)
         self.Bind(wx.EVT_MENU, self.onExit, menuExit)
+        self.Bind(wx.EVT_CLOSE, self.onExit)
 
         startPath = "D:\\Gas n' Metal"
 
@@ -39,15 +40,15 @@ class myframe(wx.Frame):
         c = wx.Button(self, -1, "C", (150,410), (60,25))
         c.Bind(wx.EVT_LEFT_UP, self.OA)
 
-        self.mp = MusicPlayer(self, self.OnAskNext, (0,450), (700,100))
-
         tp = TimePicker(self, wx.DefaultPosition)
         tp.ShowModal()
         self.lag = tp.GetLag()
         tp.Destroy()
         print "Lag set to", self.lag
 
-        self.tk = TimeKeeper("przerwy.txt", self.lag, None, None)
+        self.tk = TimeKeeper("przerwy.txt", self.lag, self.OnTStart, self.OnTEnd)
+
+        self.mp = MusicPlayer(self, self.OnAskNext, (0,450), (700,100))
         
         self.SetAutoLayout(True)
 
@@ -72,7 +73,7 @@ class myframe(wx.Frame):
         #e.Skip()
 
     def onExit(self, e):
-        #self.p.__del__()
+        self.tk.stop()
         self.Close(True)
         e.Skip() 
 
@@ -81,10 +82,18 @@ class myframe(wx.Frame):
 
     def OnAskNext(self):
         self.mp.play(self.q.next(), 1)
-        print "next?"
+
+    def OnTStart(self):
+        self.mp.mp.stop()
+        self.mp.play(self.q.next(), 1)
+        print "Start"
+
+    def OnTEnd(self):
+        self.mp.pause()
+        #self.mp.mp.stop()
+        print "End"
 
 def main():
-    #pygame.mixer.init()
     app = wx.PySimpleApp()
     frame = myframe()
     frame.Show()

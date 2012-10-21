@@ -143,13 +143,16 @@ class Player(object):
                 self.TFO = TmpFileOperator()
                 
                 self.Instance = vlc.Instance()
+                self.new_player()
+
+            def new_player(self):
                 self.player = self.Instance.media_player_new()
                 self.player.event_manager().event_attach(vlc.EventType.MediaPlayerEndReached, self.OnEnd)
                 self.player.event_manager().event_attach(vlc.EventType.MediaPlayerPlaying, self.OnPlay)
 
             @vlc.callbackmethod
             def OnEnd(self, e):
-                #print "Ended"
+                print "Ended"
                 SubProces(self.OnMusicEnd, 1000)
 
             @vlc.callbackmethod
@@ -169,9 +172,9 @@ class Player(object):
                             
 
             def play(self, path = "", play = 1):
-                #print "Play", play, path
+                print "Play", play, path
                 while (not self.loaded):
-                    #print "Me lagsta"
+                    print "Me lagsta"
                     time.sleep(0.1)
                 
                 if path:
@@ -181,6 +184,7 @@ class Player(object):
                         self.TFO.add2delete(self.path)
                         self.path = path
                         tmpPath = self.TFO.temp(path)
+                        #self.new_player()
                         self.Media = self.Instance.media_new(tmpPath)
                         if not self.Media:
                             raise Exception
@@ -190,7 +194,7 @@ class Player(object):
                         print "Error!!!", e
                         self.OnEnd(None)
                 if play:
-                    #print "Played"
+                    print "Played"
                     self.paused = 0
                     self.player.play()
                     self.player.set_pause(0)
@@ -199,12 +203,12 @@ class Player(object):
 
                 
             def pause(self):
-                #print "Paused"
+                print "Paused"
                 self.paused = 1
                 self.player.set_pause(1)
                 
             def stop(self):
-                #print "Stopped"
+                print "Stopped"
                 self.pause()
                 self.player.stop()
 
