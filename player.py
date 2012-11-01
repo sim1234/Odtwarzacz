@@ -1,21 +1,25 @@
 import os, wx, threading, vlc, shutil, time
 
 class SubProces(threading.Thread):
-            def __init__(self, function, lag = 0):
+            def __init__(self, function, lag = 0, *args, **kwargs):
                 threading.Thread.__init__(self)
                 self.function = function
+                self.a = args
+                self.k = kwargs
                 self.lag = lag / 1000.0
                 self.start()
           
             def run(self):
                 if self.lag:
                     time.sleep(self.lag)
-                self.function()
+                self.function(*self.a, **self.k)
 
 class Timer(threading.Thread):
-            def __init__(self, function, lag = 0):
+            def __init__(self, function, lag = 0, *args, **kwargs):
                 threading.Thread.__init__(self)
                 self.function = function
+                self.a = args
+                self.k = kwargs
                 self.lag = lag / 1000.0
                 self.running = True
                 self.start()
@@ -23,9 +27,9 @@ class Timer(threading.Thread):
             def run(self):
                 while self.running:
                     try:
-                        self.function()
+                        self.function(*self.a, **self.k)
                     except Exception as e:
-                        print "Timer function error:", e
+                        #print "Timer function error:", e
                         #self.running = False
                         #break
                         return
@@ -127,89 +131,95 @@ class TmpFileOperator(object):
                     p = path.find(".", p + 1)
                 return path[p:]
 
-            def __del__(self):
-                #print "deleting"
+            def clean(self):
                 self.check()
                 if self.dir:
                     Delete(self.dir, 1)
 
+            def __del__(self):
+                self.clean()
+
 
 class Player(object):
-            def __init__(self, OnMusicEnd):
-                self.OnMusicEnd = OnMusicEnd
-                self.paused = 1
-                self.loaded = True
+            def __init__(self, OnMusicEnd = None):
+                if OnMusicEnd == None:
+                    self.OnMusicEnd = self.p
+                else:
+                    self.OnMusicEnd = OnMusicEnd
+                    
                 self.path = ""
+                self.paused = True
+                self.loading = False
                 self.TFO = TmpFileOperator()
-                
                 self.Instance = vlc.Instance()
-                self.new_player()
-
-            def new_player(self):
                 self.player = self.Instance.media_player_new()
                 self.player.event_manager().event_attach(vlc.EventType.MediaPlayerEndReached, self.OnEnd)
                 self.player.event_manager().event_attach(vlc.EventType.MediaPlayerPlaying, self.OnPlay)
 
+            def p(self):
+                pass
+            
             @vlc.callbackmethod
             def OnEnd(self, e):
-                print "Ended"
-                SubProces(self.OnMusicEnd, 1000)
+                #self.loading = False
+                self.OnMusicEnd()
 
             @vlc.callbackmethod
             def OnPlay(self, e):
-                if not self.loaded:
-                    self.player.set_pause(1)
-                    SubProces(self.OnLoaded, 200)
-                else:
-                    self.OnLoaded()
+                self.loading = False
+                self.SetCPause()
 
-            def OnLoaded(self):
-                if self.paused:
-                    self.player.set_pause(1)
-                else:
-                    self.player.set_pause(0)
-                self.loaded = True
+            def SetCPause(self):
+                if not self.loading:
+                    if self.paused:
+                        self.player.set_pause(True)
+                    else:
+                        self.player.set_pause(False)
                             
 
             def play(self, path = "", play = 1):
-                print "Play", play, path
-                while (not self.loaded):
-                    print "Me lagsta"
-                    time.sleep(0.1)
-                
+                self.paused = not play
                 if path:
+                    x = 0
+                    while self.loading:
+                        x += 1
+                        if x > 5:
+                            self.loading = False
+                            self.player.stop()
+                            self.OnMusicEnd()
+                            return
+                        #print "Me lagsta"
+                        time.sleep(1)
+                    self.loading = True
+                    time.sleep(0.5)
+                    
                     try:
-                        #self.stop()
-                        self.loaded = False
+                        #self.player.stop()
                         self.TFO.add2delete(self.path)
                         self.path = path
                         tmpPath = self.TFO.temp(path)
-                        #self.new_player()
                         self.Media = self.Instance.media_new(tmpPath)
                         if not self.Media:
                             raise Exception
                         self.player.set_media(self.Media)
+                        self.player.play()
+                        return
                         #print "Loaded"
                     except Exception as e:
-                        print "Error!!!", e
-                        self.OnEnd(None)
-                if play:
-                    print "Played"
-                    self.paused = 0
-                    self.player.play()
-                    self.player.set_pause(0)
-                else:
-                    self.pause()
+                        #print "Error!!!", e
+                        self.loading = False
+                        self.OnMusicEnd()
+                        return
+
+                self.SetCPause()
 
                 
             def pause(self):
-                print "Paused"
-                self.paused = 1
-                self.player.set_pause(1)
+                self.paused = True
+                self.SetCPause()
                 
             def stop(self):
-                print "Stopped"
-                self.pause()
+                self.paused = True
                 self.player.stop()
 
             def ms2format(self, ms, delimiter = ":"):
@@ -227,16 +237,16 @@ class Player(object):
                 return r
 
             def get_time(self):
-                t1 = 0
-                t2 = 0
-                if self.loaded and self.player.will_play():
-                    t1 = max(0, self.player.get_time())
-                    t2 = max(0, self.player.get_length())
+                t1 = max(0, self.player.get_time())
+                t2 = max(0, self.player.get_length())
                 return self.ms2format(t1) + " / " + self.ms2format(t2)
 
-            def __del__(self):
+            def clean(self):
                 self.stop()
-                #self.TFO.__del__()
+                self.TFO.clean()
+
+            def __del__(self):
+                self.clean()
 
 
 class MusicPlayer(wx.Panel):
@@ -245,11 +255,12 @@ class MusicPlayer(wx.Panel):
         #self.SetBackgroundColour((255,255,255))
         self.path = ""
         self.OnNext = OnNext
+        self.fp = 0
 
         Sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.pb = wx.Button(self, -1, "Play")
         Sizer.Add(self.pb, 1, wx.ALL|wx.EXPAND, 0)
-        self.pb.Bind(wx.EVT_LEFT_UP, self.OnPP)
+        self.pb.Bind(wx.EVT_BUTTON, self.OnPP)
 
         stsiz = wx.BoxSizer(wx.VERTICAL)
         
@@ -265,7 +276,7 @@ class MusicPlayer(wx.Panel):
         Sizer.Add(stsiz, 6, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5)
         
         self.nb = wx.Button(self, -1, "Next")
-        self.nb.Bind(wx.EVT_LEFT_UP, self.OnN)
+        self.nb.Bind(wx.EVT_BUTTON, self.OnN)
         Sizer.Add(self.nb, 1, wx.ALL|wx.EXPAND, 0)
 
         self.mp = Player(self.next)
@@ -282,22 +293,33 @@ class MusicPlayer(wx.Panel):
         self.ti.SetLabel(self.mp.get_time())
 
     def OnPP(self, e):
-        #print "OnPP"
-        if self.mp.paused:
-            self.play()
+        if self.fp > 0:
+            self.play("", True)
+        elif self.fp < 0:
+            self.play("", False)
         else:
-            self.pause()
+            self.play("", self.mp.paused)
+        self.fp = 0
         e.Skip(1)
 
     def OnN(self, e):
-        self.next()
+        self._next()
         e.Skip(1)
 
     def next(self):
+        e = wx.PyCommandEvent(wx.EVT_BUTTON.typeId, self.nb.GetId())
+        wx.PostEvent(self.nb, e)
+
+    def _next(self):
         #print "Next"
-        t = int(not self.mp.paused)
-        self.OnNext()
-        self.play(play = t)
+        t = not self.mp.paused
+        self.play(self.OnNext(), t)
+        #self.play("", t)
+
+    def epp(self, fpause = 0):
+        self.fp = fpause
+        e = wx.PyCommandEvent(wx.EVT_BUTTON.typeId, self.pb.GetId())
+        wx.PostEvent(self.pb, e)
 
     def play(self, path = "", play = 1):
         if path:
@@ -318,9 +340,7 @@ class MusicPlayer(wx.Panel):
         self.mp.pause()
         self.pb.SetLabel("Play")
 
-    def __del__(self):
-        #self.mp.__del__()
+    def clean(self):
         self.timer.stop()
-        wx.Panel.__del__(self)
-
+        self.mp.clean()
 

@@ -76,7 +76,7 @@ class TimeKeeper(threading.Thread):
         #print self.table
 
     def isin(self, t, tt):
-        return tt[0][0] <= t[0] <= tt[1][0] and tt[0][1] <= t[1] <= tt[1][1]
+        return tt[0][0] <= t[0] <= tt[1][0] and tt[0][1] <= t[1] < tt[1][1]
 
     def nowin(self, tt):
         t = wx.DateTime.Now()
@@ -86,7 +86,7 @@ class TimeKeeper(threading.Thread):
         return self.isin((h, m), tt)
 
     def run(self):
-        
+        time.sleep(3)
         while self.running:
             for x in self.table:
                 i = self.table.index(x)

@@ -34,11 +34,11 @@ class myframe(wx.Frame):
         #pygame.mixer.music.play()
         #pygame.mixer.music.fadeout(5000)
         a = wx.Button(self, -1, "A", (0,410), (60,25))
-        a.Bind(wx.EVT_LEFT_UP, self.OR)
+        a.Bind(wx.EVT_BUTTON, self.OR)
         b = wx.Button(self, -1, "B", (70,410), (60,25))
-        b.Bind(wx.EVT_LEFT_UP, self.ON)
+        b.Bind(wx.EVT_BUTTON, self.ON)
         c = wx.Button(self, -1, "C", (150,410), (60,25))
-        c.Bind(wx.EVT_LEFT_UP, self.OA)
+        c.Bind(wx.EVT_BUTTON, self.OA)
 
         tp = TimePicker(self, wx.DefaultPosition)
         tp.ShowModal()
@@ -74,23 +74,22 @@ class myframe(wx.Frame):
 
     def onExit(self, e):
         self.tk.stop()
-        self.Close(True)
-        e.Skip() 
+        self.mp.clean()
+        e.Skip()
 
     def OnFilePick(self, path):
         self.q.add(path)
 
     def OnAskNext(self):
-        self.mp.play(self.q.next(), 1)
+        return self.q.next()
 
     def OnTStart(self):
-        self.mp.mp.stop()
-        self.mp.play(self.q.next(), 1)
+        self.mp.next()
+        self.mp.epp(1)
         print "Start"
 
     def OnTEnd(self):
-        self.mp.pause()
-        #self.mp.mp.stop()
+        self.mp.epp(-1)
         print "End"
 
 def main():
