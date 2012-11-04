@@ -1,4 +1,4 @@
-﻿import wx, os, pygame
+﻿import wx, os
 from player import MusicPlayer
 from explorator import LfileExplorer
 from library import QueueUI
