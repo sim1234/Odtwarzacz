@@ -1,0 +1,3 @@
+file_pattern=\A.*\.(((m|M)(p|P)3)|((o|O)(g|G)(g|G)))\Z
+przerwy=przerwy.txt
+paths=D:\Gas n' Metal,C:\Users\Szymon\Desktop\100

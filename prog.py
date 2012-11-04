@@ -4,12 +4,26 @@ from explorator import LfileExplorer
 from library import QueueUI
 from timer import TimeKeeper, TimePicker
 
-MyFilePattern = r"\A(.|^\w)*\.(((m|M)(p|P)3)|((o|O)(g|G)(g|G)))\Z" #".*\.(((m|M)(p|P)3)|((m|M)(p|P)2)|((w|W)(m|M)(a|A))|((a|A)(c|C)3)|((o|O)(g|G)(g|G))|((a|A)(c|C)(c|C)))" #".*\.((mp3|mp2|wma|ac3|ogg|acc)"
+def config(filename):
+    f = open(filename)
+    c = {}
+    for l in f:
+        t = l.split("=")
+        if len(t[1]) > 0 and t[1][-1] == "\n":
+            t[1] = t[1][:-1]
+        c[t[0]] = t[1]
+    return c
+
+#MyFilePattern = r"\A.*\.(((m|M)(p|P)3)|((o|O)(g|G)(g|G)))\Z" #".*\.(((m|M)(p|P)3)|((m|M)(p|P)2)|((w|W)(m|M)(a|A))|((a|A)(c|C)3)|((o|O)(g|G)(g|G))|((a|A)(c|C)(c|C)))" #".*\.((mp3|mp2|wma|ac3|ogg|acc)"
 
 class myframe(wx.Frame):
 
     def __init__(self):
-        wx.Frame.__init__(self, None, wx.ID_ANY, title=u'Odtwarzacz', size = (800,850))
+        wx.Frame.__init__(self, None, wx.ID_ANY, title=u'Odtwarzacz', size = (800,600))
+        self.SetBackgroundColour((220,220,255))
+        self.SetMinSize((400, 300)) 
+        c = config("config.txt")
+        
         self.CreateStatusBar()
         filemenu = wx.Menu()
         menuAbout = filemenu.Append(wx.ID_ABOUT, u"O programie",u" Informacje o tym programie")
@@ -21,53 +35,51 @@ class myframe(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onExit, menuExit)
         self.Bind(wx.EVT_CLOSE, self.onExit)
 
-        startPath = "D:\\Gas n' Metal"
+        #startPath = "D:\\Gas n' Metal"
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.d = LfileExplorer(self, (5,5), (300,400), startPath, MyFilePattern, 1, 1, self.OnFilePick)
-        #self.l = Library(os.path.abspath("Desktop"), MyFilePattern)
-        self.q = QueueUI(self, startPath, MyFilePattern, (310,5), (300,400))
-        self.q.random(5)
-        #self.p = Player(self, self.OnAskNext, (0,450), (780,100))
+        sizer3 = wx.BoxSizer(wx.VERTICAL)
+        self.te = wx.StaticText(self, -1, u"Biblioteka:", (0, 0))
+        f = self.te.GetFont()
+        f.SetPixelSize((10,25))
+        self.te.SetFont(f)
+        sizer3.Add(self.te, 0, wx.BOTTOM, 0)
+        self.d = LfileExplorer(self, (0,0), (500,600), c["paths"].split(","), c["file_pattern"], 1, self.OnFilePick)
+        sizer3.Add(self.d, 1, wx.ALL|wx.EXPAND, 0)
+        sizer.Add(sizer3, 1, wx.RIGHT|wx.EXPAND, 0)
+
+        sizer4 = wx.BoxSizer(wx.VERTICAL)
+        self.tq = wx.StaticText(self, -1, u"Kolejka:", (0, 0))
+        self.tq.SetFont(f)
+        sizer4.Add(self.tq, 0, wx.BOTTOM, 0)
+        self.q = QueueUI(self, c["paths"].split(","), c["file_pattern"], (505,0), (500,600))
+        sizer4.Add(self.q, 1, wx.ALL|wx.EXPAND, 0)
+        sizer.Add(sizer4, 1, wx.ALL|wx.EXPAND, 0)
         
-        #self.l.random(5)
-        #pygame.mixer.music.load(self.l.next())
-        #pygame.mixer.music.play()
-        #pygame.mixer.music.fadeout(5000)
-        a = wx.Button(self, -1, "A", (0,410), (60,25))
-        a.Bind(wx.EVT_BUTTON, self.OR)
-        b = wx.Button(self, -1, "B", (70,410), (60,25))
-        b.Bind(wx.EVT_BUTTON, self.ON)
-        c = wx.Button(self, -1, "C", (150,410), (60,25))
-        c.Bind(wx.EVT_BUTTON, self.OA)
-
+        sizer2.Add(sizer, 6, wx.ALL|wx.EXPAND, 0)
+        
         tp = TimePicker(self, wx.DefaultPosition)
         tp.ShowModal()
         self.lag = tp.GetLag()
         tp.Destroy()
         print "Lag set to", self.lag
 
-        self.tk = TimeKeeper("przerwy.txt", self.lag, self.OnTStart, self.OnTEnd)
+        self.tk = TimeKeeper("przerwy.txt", self.lag, self.OnTStart, self.OnTEnd, self.UpdateClock)
 
         self.mp = MusicPlayer(self, self.OnAskNext, (0,450), (700,100))
-        
+        self.mp.SetMinSize((200, 100))
+        sizer2.Add(self.mp, 0, wx.TOP|wx.EXPAND, 0)
+
+        self.SetSizer(sizer2)
         self.SetAutoLayout(True)
 
-    def OR(self, e):
-        print self.q.random()
-        e.Skip()
-
-    def ON(self, e):
-        print self.q.next()
-        e.Skip()
-
-    def OA(self, e):
-        self.mp.play(self.q.next())
-        print len(self.q.q), self.q.q
-        print len(self.q.lib.queue), self.q.lib.queue
-        e.Skip()
+    def UpdateClock(self, time):
+        t = (time, 0)
+        self.GetStatusBar().SetFields(t[:1])
         
     def onAbout(self, e):
-        d = wx.MessageDialog(self, u"Ten program został stworzony w celach edukacyjnych przez Sim", u"O programie", wx.OK)
+        d = wx.MessageDialog(self, u"Ten program został stworzony w celach edukacyjnych przez Sim1234", u"O programie", wx.OK)
         d.ShowModal()
         d.Destroy()
         #e.Skip()

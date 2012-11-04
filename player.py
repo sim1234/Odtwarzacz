@@ -1,4 +1,4 @@
-import os, wx, threading, vlc, shutil, time
+﻿import os, wx, threading, vlc, shutil, time
 
 class SubProces(threading.Thread):
             def __init__(self, function, lag = 0, *args, **kwargs):
@@ -251,20 +251,22 @@ class Player(object):
 
 class MusicPlayer(wx.Panel):
     def __init__(self, parent, OnNext, pos = (0,0), size = (50,18)):
-        wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size)
+        wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, wx.RAISED_BORDER)
         #self.SetBackgroundColour((255,255,255))
         self.path = ""
         self.OnNext = OnNext
         self.fp = 0
 
+        h = self.GetSizeTuple()[1]
+        
         Sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.pb = wx.Button(self, -1, "Play")
-        Sizer.Add(self.pb, 1, wx.ALL|wx.EXPAND, 0)
+        self.pb = wx.Button(self, -1, u"Odtwórz", size = (h, h))
+        Sizer.Add(self.pb, 0, wx.ALL|wx.EXPAND, 0)
         self.pb.Bind(wx.EVT_BUTTON, self.OnPP)
 
         stsiz = wx.BoxSizer(wx.VERTICAL)
         
-        self.t = wx.StaticText(self, -1, "Looped 4'33''") # os.path.basename(item)
+        self.t = wx.StaticText(self, -1, u"Zapętlone 4'33''") # os.path.basename(item)
         f = self.t.GetFont()
         f.SetPixelSize((10,25))
         self.t.SetFont(f)
@@ -275,9 +277,9 @@ class MusicPlayer(wx.Panel):
 
         Sizer.Add(stsiz, 6, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5)
         
-        self.nb = wx.Button(self, -1, "Next")
+        self.nb = wx.Button(self, -1, u"Następny", size = (h, h))
         self.nb.Bind(wx.EVT_BUTTON, self.OnN)
-        Sizer.Add(self.nb, 1, wx.ALL|wx.EXPAND, 0)
+        Sizer.Add(self.nb, 0, wx.ALL|wx.EXPAND, 0)
 
         self.mp = Player(self.next)
 
@@ -331,14 +333,14 @@ class MusicPlayer(wx.Panel):
             self.mp.play(play = play)
             
         if play:
-            self.pb.SetLabel("Pause")
+            self.pb.SetLabel(u"Pauza")
         else:
-            self.pb.SetLabel("Play")
+            self.pb.SetLabel(u"Odtwórz")
         
 
     def pause(self):
         self.mp.pause()
-        self.pb.SetLabel("Play")
+        self.pb.SetLabel(u"Odtwórz")
 
     def clean(self):
         self.timer.stop()

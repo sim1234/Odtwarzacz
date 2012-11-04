@@ -23,9 +23,11 @@ def explore(path, pattern = ".*"):
 
 
 class Library(object):
-    def __init__(self, path, pattern = ".*"):
-        self.all = explore(path, pattern)
-        self.path = path
+    def __init__(self, paths, pattern = ".*"):
+        self.all = []
+        for p in paths:
+            self.all.extend(explore(p, pattern))
+        self.paths = paths
         self.pattern = pattern
         self.queue = []
 
@@ -67,10 +69,11 @@ class Library(object):
 
 
 class QueueUI(ScrolledPanel):
-    def __init__(self, parent, path, pattern, pos = (0,0), size = (50,18)):
-        ScrolledPanel.__init__(self, parent, wx.ID_ANY, pos, size)
-        #self.SetBackgroundColour((255,255,255))
-        self.lib = Library(path, pattern)
+    def __init__(self, parent, paths, pattern, pos = (0,0), size = (50,18)):
+        ScrolledPanel.__init__(self, parent, wx.ID_ANY, pos, size, wx.RAISED_BORDER)
+        self.SetBackgroundColour((255,255,255))
+        self.lib = Library(paths, pattern)
+        
         self.q = []
 
         Sizer = wx.BoxSizer(wx.VERTICAL)

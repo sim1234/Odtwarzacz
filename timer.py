@@ -52,13 +52,14 @@ class TimePicker(wx.Dialog):
 
 
 class TimeKeeper(threading.Thread):
-    def __init__(self, path, lag, OnStart, OnEnd):
+    def __init__(self, path, lag, OnStart, OnEnd, Update):
         threading.Thread.__init__(self)
         self.running = True
         self.path = path
         self.lag = lag
         self.OnStart = OnStart
         self.OnEnd = OnEnd
+        self.Update = Update
         self.loadlib()
         self.last = []
         for x in self.table:
@@ -101,7 +102,10 @@ class TimeKeeper(threading.Thread):
             time.sleep(1)
             t = wx.DateTime.Now()
             now = (t - t.GetDateOnly()) + self.lag
-            print now
+            try:
+                self.Update(str(now))
+            except:
+                pass
 
     def stop(self):
         self.running = False

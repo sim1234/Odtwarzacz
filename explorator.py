@@ -98,7 +98,7 @@ class Ldir(wx.Panel): # Directory object
                 if p.match(e): # If file maches whith the specified pattern
                     c = Lfile(self, tp, OnFilePick = self.OnFilePick)
                     self.dodaj(c)
-            return
+            return 
 
 
 class Lfile(wx.Panel): # File object
@@ -122,27 +122,33 @@ class Lfile(wx.Panel): # File object
         e.Skip()
 
 class LfileExplorer(ScrolledPanel): # Scrollable panel. File explorer
-    def __init__(self, parent, pos = (0,0), size = (50,18), startpath = "", pattern = ".*", cache = 1, openfirst = 1, OnFilePick = lambda x: x):
-        ScrolledPanel.__init__(self, parent, wx.ID_ANY, pos, size)
+    def __init__(self, parent, pos = (0,0), size = (50,18), startpaths = (""), pattern = ".*", cache = 1, OnFilePick = lambda x: x):
+        ScrolledPanel.__init__(self, parent, wx.ID_ANY, pos, size, wx.RAISED_BORDER)
         self.SetBackgroundColour((255,255,255))
         
         self.OnFilePick = OnFilePick # Function which is called after picking (doble click) a file 
         
         Sizer = wx.BoxSizer(wx.VERTICAL)
-        self.p = wx.Panel(self, wx.ID_ANY, pos=(0,0)) # Panel, which is being sized like self.d
-        Sizer.Add(self.p, 0, wx.ALIGN_LEFT|wx.ALL, 0)
-        self.d = Ldir(self.p, startpath, (0,0), (50,18), pattern, cache, self.OnFilePick) # Root folder of file explorer
+        self.p = []
+        self.d = []
+        x = 0
+        for p in startpaths:
+            self.p.append(wx.Panel(self, wx.ID_ANY, pos=(0,0))) # Panel, which is being sized like self.d
+            Sizer.Add(self.p[x], 0, wx.ALIGN_LEFT|wx.ALL, 0)
+            self.d.append(Ldir(self.p[x], p, (0,0), (50,18), pattern, cache, self.OnFilePick)) # Root folders of file explorer
+            x += 1
         self.SetSizer(Sizer)
         
-        self.loc = startpath # Start path / Root path
+        self.locs = startpaths # Start path / Root path
         self.pattern = pattern # Pattern for acceptable files
         self.cache = cache # Caching bool
-        if openfirst: # If open start directory
-            self.d.OnOpen("")
         self.SetupScrolling()
         #self.SetAutoLayout(1)
 
     def resiz(self): # Keeps self.p well sized and shows / hides Scrollbars. Is called from its children (only Ldir)
-        self.p.SetSize(self.d.GetBestSize())
+        x = 0
+        for n in self.p:    
+            self.p[x].SetSize(self.d[x].GetBestSize())
+            x += 1
         self.SetupScrolling(scrollToTop = 0)
         self.Layout()
