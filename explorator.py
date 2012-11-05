@@ -143,6 +143,9 @@ class LfileExplorer(ScrolledPanel): # Scrollable panel. File explorer
         self.pattern = pattern # Pattern for acceptable files
         self.cache = cache # Caching bool
         self.SetupScrolling()
+        self.Bind(wx.EVT_MOUSEWHEEL , self.OnScroll)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.onMouseMove)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.onMouseMoveO)
         #self.SetAutoLayout(1)
 
     def resiz(self): # Keeps self.p well sized and shows / hides Scrollbars. Is called from its children (only Ldir)
@@ -152,3 +155,18 @@ class LfileExplorer(ScrolledPanel): # Scrollable panel. File explorer
             x += 1
         self.SetupScrolling(scrollToTop = 0)
         self.Layout()
+
+    def OnScroll(self, e):
+        r = e.GetWheelRotation() / e.GetWheelDelta()
+        x, y = self.GetViewStart()
+        self.Scroll(x, y - 3 * r)
+        e.Skip()
+
+    def onMouseMove(self, e):
+        x, y = self.GetViewStart()
+        self.SetFocus()
+        self.Scroll(x, y)# - 1)
+        e.Skip()
+    def onMouseMoveO(self, e):
+        #self.GetParent().SetFocus()
+        e.Skip()

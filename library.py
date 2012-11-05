@@ -79,6 +79,9 @@ class QueueUI(ScrolledPanel):
         Sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(Sizer)
         self.SetupScrolling()
+        self.Bind(wx.EVT_MOUSEWHEEL , self.OnScroll)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.onMouseMove)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.onMouseMoveO)
 
     def add(self, item, s = 1):
         if s:
@@ -148,6 +151,21 @@ class QueueUI(ScrolledPanel):
             self.refr()
         #print "OnDown", i
         #e.Skip()
+
+    def OnScroll(self, e):
+        r = e.GetWheelRotation() / e.GetWheelDelta()
+        x, y = self.GetViewStart()
+        self.Scroll(x, y - 2 * r)
+        e.Skip()
+
+    def onMouseMove(self, e):
+        x, y = self.GetViewStart()
+        self.SetFocus()
+        self.Scroll(x, y)# - 1)
+        e.Skip()
+    def onMouseMoveO(self, e):
+        self.GetParent().SetFocus()
+        e.Skip()
 
     def OnDel(self, e):
         i = self.q.index(e.GetEventObject())
